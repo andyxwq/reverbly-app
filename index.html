@@ -9,7 +9,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
   <style>
     :root { --ink:#f6f3ff; --muted:#b8b1cb; --surface:#181128; --surface-2:#231a36; --line:#3a2e52; --pink:#ff77c8; --purple:#9f7cff; }
     * { box-sizing:border-box; }
@@ -326,6 +328,11 @@ function loadSettings() {
 }
 loadSettings();
 paint();
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  });
+}
 </script>
 </body>
 </html>
