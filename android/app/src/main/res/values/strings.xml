@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Reverbly</string>
+    <string name="title_activity_main">Reverbly</string>
+    <string name="package_name">app.reverbly.phone</string>
+    <string name="custom_url_scheme">app.reverbly.phone</string>
+</resources>
