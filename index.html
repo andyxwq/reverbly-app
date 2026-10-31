@@ -6,6 +6,9 @@
   <title>Reverbly phone editor</title>
   <meta name="description" content="Phone editor for slowed, sped-up, and loop-ready audio. Export WAV.">
   <meta name="theme-color" content="#0e0b17">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <style>
     :root { --ink:#f6f3ff; --muted:#b8b1cb; --surface:#181128; --surface-2:#231a36; --line:#3a2e52; --pink:#ff77c8; --purple:#9f7cff; }
@@ -47,7 +50,7 @@
 <body>
 <main>
   <header>
-    <a class="brand" href="/"><span class="mark">R</span>Reverbly</a>
+    <a class="brand" href="https://reverbly.app/"><span class="mark">R</span>Reverbly</a>
     <a class="muted" href="https://reverbly.app/reverbly-prototype.html">Full editor</a>
   </header>
   <div class="tabs" role="tablist">
@@ -115,7 +118,7 @@ PRESETS.forEach((item) => {
   presetBox.append(button);
 });
 function applyPreset(item) {
-  preset = item.id; $("speed").value = item.speed; $("reverb").value = item.reverb; $("bass").value = item.bass; dry = false; paint();
+  preset = item.id; $("speed").value = item.speed; $("reverb").value = item.reverb; $("bass").value = item.bass; dry = false; paint(); saveSettings();
 }
 function paint() {
   $("speedValue").textContent = Number($("speed").value).toFixed(2) + "×";
@@ -129,8 +132,8 @@ function paint() {
   $("ab").textContent = dry ? "A/B: original" : "A/B: your mix";
   [...presetBox.children].forEach((button, index) => button.classList.toggle("on", PRESETS[index].id === preset));
 }
-["speed","reverb","bass"].forEach((id) => $(id).addEventListener("input", () => { preset = "custom"; paint(); }));
-["fadeIn","fadeOut","start","end"].forEach((id) => $(id).addEventListener("input", () => { if (id === "start" || id === "end") clampClip(); paint(); }));
+["speed","reverb","bass"].forEach((id) => $(id).addEventListener("input", () => { preset = "custom"; paint(); saveSettings(); }));
+["fadeIn","fadeOut","start","end"].forEach((id) => $(id).addEventListener("input", () => { if (id === "start" || id === "end") clampClip(); paint(); saveSettings(); }));
 function show(tab) {
   $("panelSound").hidden = tab !== "sound";
   $("panelMix").hidden = tab !== "mix";
@@ -215,8 +218,20 @@ async function renderClip(asDry) {
   const dryGain = offline.createGain(); dryGain.gain.value = 1 - wet * 0.4;
   const send = offline.createGain(); send.gain.value = wet;
   const verb = offline.createConvolver();
-  const impulse = offline.createBuffer(2, Math.floor(offline.sampleRate * 2.2), offline.sampleRate);
-  for (let channel = 0; channel < 2; channel++) { const data = impulse.getChannelData(channel); for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 2.8); }
+  const impulseLen = Math.floor(offline.sampleRate * 2.4);
+  const impulse = offline.createBuffer(2, impulseLen, offline.sampleRate);
+  for (let channel = 0; channel < 2; channel++) {
+    const data = impulse.getChannelData(channel);
+    const early = [0.012, 0.021, 0.034, 0.048, 0.067];
+    early.forEach((t, k) => {
+      const i = Math.floor(t * offline.sampleRate);
+      if (i < data.length) data[i] += (channel === 0 ? 1 : -0.7) * (0.45 - k * 0.07);
+    });
+    for (let i = 0; i < data.length; i++) {
+      const decay = Math.pow(1 - i / data.length, 2.4);
+      data[i] += (Math.random() * 2 - 1) * decay * (channel === 0 ? 0.9 : 0.75);
+    }
+  }
   verb.buffer = impulse;
   const fade = offline.createGain();
   const heard = prepared.duration / rate;
@@ -281,6 +296,35 @@ $("exportBtn").onclick = async () => {
     $("status").textContent = "Ready to post. " + filename;
   } catch (e) { $("status").textContent = "Export failed. Try a shorter clip."; }
 };
+function saveSettings() {
+  try {
+    const s = {
+      speed: $("speed").value, reverb: $("reverb").value, bass: $("bass").value,
+      keepPitch: $("keepPitch").checked, fadeIn: $("fadeIn").value, fadeOut: $("fadeOut").value,
+      loopSeconds: $("loopSeconds").value, normalize: $("normalize").checked, seamless: $("seamless").checked,
+      preset
+    };
+    localStorage.setItem("reverbly-phone", JSON.stringify(s));
+  } catch (e) {}
+}
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem("reverbly-phone");
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (s.speed) $("speed").value = s.speed;
+    if (s.reverb) $("reverb").value = s.reverb;
+    if (s.bass) $("bass").value = s.bass;
+    if (typeof s.keepPitch === "boolean") $("keepPitch").checked = s.keepPitch;
+    if (s.fadeIn) $("fadeIn").value = s.fadeIn;
+    if (s.fadeOut) $("fadeOut").value = s.fadeOut;
+    if (s.loopSeconds) $("loopSeconds").value = s.loopSeconds;
+    if (typeof s.normalize === "boolean") $("normalize").checked = s.normalize;
+    if (typeof s.seamless === "boolean") $("seamless").checked = s.seamless;
+    if (s.preset) preset = s.preset;
+  } catch (e) {}
+}
+loadSettings();
 paint();
 </script>
 </body>
