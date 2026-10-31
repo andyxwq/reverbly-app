@@ -1,6 +1,9 @@
 node_modules/
 android/app/build/
 android/.gradle/
+android/keystore.properties
+*.keystore
+*.jks
 ios/App/Pods/
 ios/App/build/
 *.log
