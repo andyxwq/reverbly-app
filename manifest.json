@@ -1,0 +1,19 @@
+{
+  "name": "Reverbly",
+  "short_name": "Reverbly",
+  "description": "Phone editor for slowed, sped-up, and loop-ready audio. Export WAV.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0e0b17",
+  "theme_color": "#0e0b17",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
